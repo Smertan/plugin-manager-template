@@ -1,0 +1,12 @@
+[template]
+ignore = [
+    "target",
+    "tests/target"
+]
+
+exclude = [
+    "plugin_types/*/lib.rs"
+]
+
+[hooks]
+pre = ["plugin_manager.rhai"]
