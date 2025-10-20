@@ -1,5 +1,5 @@
 pub mod task_a;
-use plugin_types::Plugins;
+use plugin_manager::plugin_types::Plugins;
 
 #[unsafe(no_mangle)]
 pub fn create_plugins() -> Vec<Plugins> {

@@ -23,7 +23,7 @@
 //! mentioned in the `Plugin` trait, and needs to be set up to return self.
 //!
 //! ```rust
-//! use plugin_types::Plugin;
+//! use plugin_manager::plugin_types::Plugin;
 //! use std::any::Any;
 //!
 //! #[derive(Debug)]
@@ -214,6 +214,8 @@
 //! in Rust applications, offering flexibility and ease of use.
 
 pub mod plugin_structs;
+pub mod plugin_types;
+// pub use plugin_types;
 
 use libloading::{Library, Symbol};
 use plugin_structs::{PluginCreate as PluginCreateNew, PluginResult as PluginResultNew};

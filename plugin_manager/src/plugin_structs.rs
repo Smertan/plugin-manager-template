@@ -1,5 +1,5 @@
+use crate::plugin_types::{Plugin, PluginInventory, Plugins};
 use libloading::Library;
-use plugin_types::{Plugin, PluginInventory, Plugins};
 use std::any::Any;
 use std::collections::{HashMap, hash_map};
 use std::error::Error;

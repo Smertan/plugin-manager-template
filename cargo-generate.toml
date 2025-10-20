@@ -1,11 +1,14 @@
 [template]
 ignore = [
     "target",
-    "tests/target"
+    "tests/target",
+    "Cargo.lock",
 ]
 
 exclude = [
-    "plugin_types/*/lib.rs"
+    "plugin_types/*/lib.rs",
+    "**/plugin_types.rs"
+
 ]
 
 [hooks]

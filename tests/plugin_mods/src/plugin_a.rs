@@ -1,4 +1,4 @@
-use plugin_types::Plugin;
+use plugin_manager::plugin_types::Plugin;
 use std::any::Any;
 
 #[derive(Debug, Clone, PartialEq, Eq)]

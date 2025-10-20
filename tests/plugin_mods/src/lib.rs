@@ -1,6 +1,6 @@
 pub mod plugin_a;
 pub mod plugin_b;
-use plugin_types::Plugins;
+use plugin_manager::plugin_types::Plugins;
 // use plugin_manager::plugin_structs::Plugins;
 
 #[unsafe(no_mangle)]

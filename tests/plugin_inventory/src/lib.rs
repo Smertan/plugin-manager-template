@@ -1,6 +1,6 @@
 pub mod inventory_a;
 // use plugin_manager::plugin_structs::Plugins;
-use plugin_types::Plugins;
+use plugin_manager::plugin_types::Plugins;
 
 #[unsafe(no_mangle)]
 pub fn create_plugins() -> Vec<Plugins> {

@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 plugin-manager = { path = "../../plugin_manager" }
-plugin-types = { path = "../../plugin_types" }
+# plugin-types = { path = "../../plugin_types" }
 
 [lib]
 name = "plugin_inventory"

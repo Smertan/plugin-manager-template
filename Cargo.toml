@@ -1,3 +1,3 @@
 [workspace]
-members = [".", "plugin_types", "tests/plugin_inventory", "tests/plugin_mods", "tests/plugin_tasks"]
+members = [".", "tests/plugin_inventory", "tests/plugin_mods", "tests/plugin_tasks"]
 resolver = "3"

@@ -64,8 +64,6 @@ version = "0.1.0"
 dependencies = [
  "libloading",
  "log",
- "plugin-mods",
- "plugin-types",
  "serde",
  "serde_json",
  "toml",
@@ -75,15 +73,7 @@ dependencies = [
 name = "plugin-mods"
 version = "0.1.0"
 dependencies = [
- "plugin-types",
-]
-
-[[package]]
-name = "plugin-types"
-version = "0.1.0"
-dependencies = [
- "libloading",
- "serde",
+ "plugin-manager",
 ]
 
 [[package]]
@@ -91,14 +81,13 @@ name = "plugin_inventory"
 version = "0.1.0"
 dependencies = [
  "plugin-manager",
- "plugin-types",
 ]
 
 [[package]]
 name = "plugin_tasks"
 version = "0.1.0"
 dependencies = [
- "plugin-types",
+ "plugin-manager",
 ]
 
 [[package]]
