@@ -21,4 +21,7 @@ toml = "0.9.6"
 # [dev-dependencies]
 # plugin-mods = { path = "../tests/plugin_mods" }
 
+[lib]
+name = "plugin_manager"
+
 
