@@ -7,24 +7,20 @@ let project_name = if !project_name.replace("-", " ").to_string().contains("plug
     project_name
 };
 
-// fn get_directory_name(project_name: &str, current_name: &str) -> String {
-//     let project_name_snake_case = to_snake_case(project_name);
-//     let mut directory_name = current_name.to_string();
-//     directory_name.make_lower();
-//     directory_name
-// }
-
 // Convert to title case and set as a new variable
 let project_name_title = to_title_case(project_name);
 variable::set("project-name-title", project_name_title);
 variable::set("project-name-kebab-case", to_kebab_case(project_name));
 
-// Rename a directory
-let old_dir = "plugin_manager";
-// let new_dir = "new_directory_name";
+/// Updates the cargo.toml files to the new project name
+fn post_generation(project_name) {
 
-// Check if the old directory exists
-if file::exists(old_dir) {
-    // Rename the directory
-    file::rename(old_dir, to_snake_case(project_name).to_lower());
+    system::command("chmod u+x plugin_manager_pre.sh");
+
+    let result = system::command(`bash plugin_manager_pre.sh ${to_kebab_case(project_name)}`);
+    // if result != 0 {
+    //     abort("Failed to execute plugin_manager_post.sh");
+    // }
 }
+
+post_generation(project_name);

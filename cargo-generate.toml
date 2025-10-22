@@ -8,8 +8,10 @@ ignore = [
 exclude = [
     "plugin_types/*/lib.rs",
     "**/plugin_types.rs"
-
 ]
+
+# [placeholders]
+# project_name = { prompt = "Enter the project name (plugin_manager will be appended): ", type = "string" }
 
 [hooks]
 pre = ["plugin_manager.rhai"]
