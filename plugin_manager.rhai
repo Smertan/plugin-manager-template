@@ -18,9 +18,9 @@ fn post_generation(project_name) {
     system::command("chmod u+x plugin_manager_pre.sh");
 
     let result = system::command(`bash plugin_manager_pre.sh ${to_kebab_case(project_name)}`);
-    // if result != 0 {
-    //     abort("Failed to execute plugin_manager_post.sh");
-    // }
+
+    // prints the result capturing stdout and stderr
+    print(`The results output ${result}`);
 }
 
 post_generation(project_name);

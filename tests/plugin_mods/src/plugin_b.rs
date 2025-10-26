@@ -23,8 +23,3 @@ impl PluginB {
         println!("Executing other method in Plugin B");
     }
 }
-
-// #[unsafe(no_mangle)]
-// pub fn create_plugin() -> Box<dyn Plugin> {
-//     Box::new(PluginB)
-// }

@@ -1,13 +1,13 @@
-# Plugin Manager
+# {{ project-name-title }}
 
-![Crates.io Version](https://img.shields.io/crates/v/plugin-manager)
-![GitHub License](https://img.shields.io/github/license/Smertan/plugin-manager)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Smertan/plugin-manager/ci.yml)
+![Crates.io Version](https://img.shields.io/crates/v/{{ project-name-kebab-case }})
+![GitHub License](https://img.shields.io/github/license/{{ github-username }}/{{ project-name-kebab-case }})
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/{{ github-username }}/{{ project-name-kebab-case }}/ci.yml)
 
 A flexible and easy-to-use plugin management system for Rust applications. It provides a robust foundation for building plugin-based architectures
 in Rust applications.
 
-The `Plugin Manager` library allows dynamic loading, registration, and management of plugins at runtime. It supports individual plugins and grouped plugins, making it suitable for various application architectures.
+The `{{ project-name-title }}` library allows dynamic loading, registration, and management of plugins at runtime. It supports individual plugins and grouped plugins, making it suitable for various application architectures.
 
 ## Features
 
@@ -24,7 +24,7 @@ The package can either be installed via `cargo add` or the `Cargo.toml` file.
 cargo add
 
 ```sh
-cargo add plugin-manager
+cargo add {{ project-name-kebab-case }}
 ```
 
 or
@@ -33,7 +33,7 @@ Cargo.toml file
 
 ```toml
 [dependencies]
-plugin-manager = "0.1.0"
+{{ project-name-kebab-case }} = "0.1.0"
 ```
 
 ## Creating Plugins
@@ -74,11 +74,11 @@ pub fn create_plugins() -> Vec<Box<dyn Plugin>> {
 
 When creating a plugin, you need to set up your `Cargo.toml` file correctly:
 
-1. Add the `plugin_manager` as a dependency:
+1. Add the `{{ project-name-kebab-case }}` as a dependency:
 
    ```toml
    [dependencies]
-   plugin_manager = "0.1.0"
+   {{ project-name-kebab-case }} = "0.1.0"
    ```
 
 2. Configure the library to be both a Rust library and a dynamic library:
@@ -113,7 +113,7 @@ Both the main project using plugins and the individual plugin projects are end u
 
 1. Main Project Cargo.toml:
    - Located in the root of the project that will use plugins.
-   - Includes `plugin_manager` as a dependency.
+   - Includes `{{ project-name-kebab-case }}` as a dependency.
    - Does not need the `crate-type` specification.
    - Does not contain any metadata for plugin configuration.
    - The loaded plugins are dependant on the plugins specified in the `End-User's` project Cargo.toml.
@@ -127,13 +127,13 @@ Both the main project using plugins and the individual plugin projects are end u
    edition = "2024"
 
    [dependencies]
-   plugin_manager = "0.1.0"
+   {{ project-name-kebab-case }} = "0.1.0"
    ```
 
 2. Plugin Project Cargo.toml:
 
    - Located in a separate project directory for each plugin.
-   - Includes `plugin_manager` as a dependency.
+   - Includes `{{ project-name-kebab-case }}` as a dependency.
    - Specifies `crate-type = ["lib", "cdylib"]` to build as both a Rust library and a dynamic library.
    - Does not contain plugin metadata configuration.
 
@@ -146,7 +146,7 @@ Both the main project using plugins and the individual plugin projects are end u
    edition = "2024"
 
    [dependencies]
-   plugin_manager = "0.1.0"
+   {{ project-name-kebab-case }} = "0.1.0"
 
    [lib]
    name = "my_plugin"

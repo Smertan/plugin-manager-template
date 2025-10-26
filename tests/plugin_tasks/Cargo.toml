@@ -5,7 +5,6 @@ edition = "2024"
 
 [dependencies]
 plugin-manager = { path = "../../{{ crate_name }}_plugin_manager" }
-# plugin-types = { path = "../../plugin_types" }
 
 [lib]
 name = "plugin_tasks"

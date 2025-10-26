@@ -3,6 +3,7 @@ ignore = [
     "target",
     "tests/target",
     "Cargo.lock",
+    "plugin_manager_pre.sh",
 ]
 
 exclude = [
@@ -10,8 +11,8 @@ exclude = [
     "**/plugin_types.rs"
 ]
 
-# [placeholders]
-# project_name = { prompt = "Enter the project name (plugin_manager will be appended): ", type = "string" }
+[placeholders]
+github-username = { prompt = "Enter the github username for the plugin_manager repo", type = "string" }
 
 [hooks]
 pre = ["plugin_manager.rhai"]
