@@ -1,4 +1,4 @@
-//! # Plugin Manager
+//! # {{ project-name-title }}
 //!
 //! A flexible and easy-to-use plugin management system for Rust applications.
 //!
@@ -54,11 +54,11 @@
 //!
 //! When creating a plugin, you need to set up your `Cargo.toml` file correctly:
 //!
-//! 1. Add the `plugin_manager` as a dependency:
+//! 1. Add the `{{ project-name-kebab-case }}` as a dependency:
 //!
 //! ```toml
 //! [dependencies]
-//! plugin_manager = "0.1.0"
+//! {{ project-name-kebab-case }} = "0.1.0"
 //! ```
 //!
 //! 2. Configure the library to be both a Rust library and a dynamic library:
@@ -93,7 +93,7 @@
 //!
 //! 1. Main Project Cargo.toml:
 //!    - Located in the root of the project that will use plugins.
-//!    - Includes `plugin_manager` as a dependency.
+//!    - Includes `{{ project-name-kebab-case }}` as a dependency.
 //!    - Does not need the `crate-type` specification.
 //!    - Does not contain any metadata for plugin configuration.
 //!    - The loaded plugins are dependant on the plugins specified in the `End-User's` project Cargo.toml.
@@ -106,12 +106,12 @@
 //!    edition = "2024"
 //!
 //!    [dependencies]
-//!    plugin_manager = "0.1.0"
+//!    {{ project-name-kebab-case }} = "0.1.0"
 //!    ```
 //!
 //! 2. Plugin Project Cargo.toml:
 //!    - Located in a separate project directory for each plugin.
-//!    - Includes `plugin_manager` as a dependency.
+//!    - Includes `{{ project-name-kebab-case }}` as a dependency.
 //!    - Specifies `crate-type = ["lib", "cdylib"]` to build as both a Rust library and a dynamic library.
 //!    - Does not contain plugin metadata configuration.
 //!
@@ -123,7 +123,7 @@
 //!    edition = "2024"
 //!
 //!    [dependencies]
-//!    plugin_manager = "0.1.0"
+//!    {{ project-name-kebab-case }} = "0.1.0"
 //!
 //!    [lib]
 //!    name = "my_plugin"
@@ -151,17 +151,17 @@
 //! The main differences between these Cargo.toml files are:
 //!
 //! 1. The Main Project Cargo.toml sets up the core project that will use plugins:
-//!    - It includes the plugin_manager as a dependency.
+//!    - It includes the {{ project-name-kebab-case }} as a dependency.
 //!    - It doesn't specify crate-type or contain plugin metadata.
 //!    - The plugins it can load are determined by the End-User's project configuration.
 //!
 //! 2. The Plugin Project Cargo.toml configures individual plugin projects:
-//!    - It includes the plugin_manager as a dependency.
+//!    - It includes the {{ project-name-kebab-case }} as a dependency.
 //!    - It specifies crate-type as both "lib" and "cdylib" to produce a dynamic library.
 //!    - It doesn't contain any plugin metadata configuration.
 //!
 //! 3. The End-User Project Cargo.toml configures the application that will use the main project and its plugins:
-//!    - It includes the main project (not the plugin_manager directly) as a dependency.
+//!    - It includes the main project (not the {{ project-name-kebab-case }} directly) as a dependency.
 //!    - It contains the metadata for plugin configuration, specifying which plugins to load and how to group them.
 //!
 //! ## Plugin Configuration

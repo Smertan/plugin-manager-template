@@ -2,7 +2,7 @@
 name = "plugin-manager"
 version = "0.1.0"
 edition = "2024"
-authors = ["Andre Bowen-Brown <contact@genja.co.uk>"]
+authors = ["{{ authors }}"]
 description = "A flexible and easy-to-use plugin management system for Rust applications"
 license = "Apache-2.0"
 readme = "README.md"

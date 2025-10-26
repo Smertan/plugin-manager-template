@@ -14,7 +14,6 @@ variable::set("project-name-kebab-case", to_kebab_case(project_name));
 
 /// Updates the cargo.toml files to the new project name
 fn post_generation(project_name) {
-
     system::command("chmod u+x plugin_manager_pre.sh");
 
     let result = system::command(`bash plugin_manager_pre.sh ${to_kebab_case(project_name)}`);
