@@ -13,10 +13,6 @@ impl Plugin for PluginB {
         println!("Executing Plugin B");
         Ok(())
     }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 }
 impl PluginB {
     pub fn other_method(&self) {

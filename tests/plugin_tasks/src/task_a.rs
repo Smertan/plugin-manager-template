@@ -13,10 +13,6 @@ impl Plugin for TaskA {
         println!("Executing Task A");
         Ok(())
     }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 }
 impl TaskA {
     pub fn other_method(&self) {

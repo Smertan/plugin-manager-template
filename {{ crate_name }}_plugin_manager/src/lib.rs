@@ -19,9 +19,6 @@
 //!
 //! To create a plugin, implement the `Plugin` trait and export a `create_plugins` function:
 //!
-//! The `as_any` method is required to allow access to the methods not
-//! mentioned in the `Plugin` trait, and needs to be set up to return self.
-//!
 //! ```rust
 //! use plugin_manager::plugin_types::Plugin;
 //! use std::any::Any;
@@ -37,10 +34,6 @@
 //!     fn execute(&self, _context: &dyn Any) -> Result<(), Box<dyn std::error::Error>> {
 //!         println!("Executing MyPlugin");
 //!         Ok(())
-//!     }
-//!
-//!     fn as_any(&self) -> &dyn Any {
-//!         self
 //!     }
 //! }
 //!

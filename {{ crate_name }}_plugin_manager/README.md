@@ -39,8 +39,6 @@ Cargo.toml file
 ## Creating Plugins
 
 To create a plugin, implement the `Plugin` trait and export a `create_plugins` function:
-The `as_any` method is required to allow access to the methods not
-mentioned in the `Plugin` trait, and needs to be set up to return self.
 
 ```rust
 use plugin_manager::Plugin;
@@ -58,10 +56,6 @@ impl Plugin for MyPlugin {
         println!("Executing MyPlugin");
         Ok(())
     }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 }
 
 #[unsafe(no_mangle)]
@@ -76,18 +70,18 @@ When creating a plugin, you need to set up your `Cargo.toml` file correctly:
 
 1. Add the `{{ project-name-kebab-case }}` as a dependency:
 
-   ```toml
-   [dependencies]
-   {{ project-name-kebab-case }} = "0.1.0"
-   ```
+    ```toml
+    [dependencies]
+    {{ project-name-kebab-case }} = "0.1.0"
+    ```
 
 2. Configure the library to be both a Rust library and a dynamic library:
 
-   ```toml
-   [lib]
-   name = "your_plugin_name"
-   crate-type = ["lib", "cdylib"]
-   ```
+    ```toml
+    [lib]
+    name = "your_plugin_name"
+    crate-type = ["lib", "cdylib"]
+    ```
 
 This configuration allows your plugin to be compiled as both a Rust library
 and a dynamic library, which is necessary for the PluginManager to load it at runtime.
@@ -99,9 +93,9 @@ To build your plugin for use with the main project:
 1. Navigate to your plugin's directory.
 2. Run the following command to build the plugin as a dynamic library:
 
-   ```bash
-   cargo build --release
-   ```
+    ```bash
+    cargo build --release
+    ```
 
 3. The compiled dynamic library will be in the `target/release` directory with a name like
    `libyour_plugin_name.so` (on Linux), `libyour_plugin_name.dylib` (on macOS),
@@ -112,82 +106,82 @@ To build your plugin for use with the main project:
 Both the main project using plugins and the individual plugin projects are end users of the plugin_manager.
 
 1. Main Project Cargo.toml:
-   - Located in the root of the project that will use plugins.
-   - Includes `{{ project-name-kebab-case }}` as a dependency.
-   - Does not need the `crate-type` specification.
-   - Does not contain any metadata for plugin configuration.
-   - The loaded plugins are dependant on the plugins specified in the `End-User's` project Cargo.toml.
+    - Located in the root of the project that will use plugins.
+    - Includes `{{ project-name-kebab-case }}` as a dependency.
+    - Does not need the `crate-type` specification.
+    - Does not contain any metadata for plugin configuration.
+    - The loaded plugins are dependant on the plugins specified in the `End-User's` project Cargo.toml.
 
-   Example:
+    Example:
 
-   ```toml
-   [package]
-   name = "main_project"
-   version = "0.1.0"
-   edition = "2024"
+    ```toml
+    [package]
+    name = "main_project"
+    version = "0.1.0"
+    edition = "2024"
 
-   [dependencies]
-   {{ project-name-kebab-case }} = "0.1.0"
-   ```
+    [dependencies]
+    {{ project-name-kebab-case }} = "0.1.0"
+    ```
 
 2. Plugin Project Cargo.toml:
 
-   - Located in a separate project directory for each plugin.
-   - Includes `{{ project-name-kebab-case }}` as a dependency.
-   - Specifies `crate-type = ["lib", "cdylib"]` to build as both a Rust library and a dynamic library.
-   - Does not contain plugin metadata configuration.
+    - Located in a separate project directory for each plugin.
+    - Includes `{{ project-name-kebab-case }}` as a dependency.
+    - Specifies `crate-type = ["lib", "cdylib"]` to build as both a Rust library and a dynamic library.
+    - Does not contain plugin metadata configuration.
 
-   Example:
+    Example:
 
-   ```toml
-   [package]
-   name = "my_plugin"
-   version = "0.1.0"
-   edition = "2024"
+    ```toml
+    [package]
+    name = "my_plugin"
+    version = "0.1.0"
+    edition = "2024"
 
-   [dependencies]
-   {{ project-name-kebab-case }} = "0.1.0"
+    [dependencies]
+    {{ project-name-kebab-case }} = "0.1.0"
 
-   [lib]
-   name = "my_plugin"
-   crate-type = ["lib", "cdylib"]
-   ```
+    [lib]
+    name = "my_plugin"
+    crate-type = ["lib", "cdylib"]
+    ```
 
 3. End-User Project Cargo.toml:
 
-   - Includes the main project as dependencies.
-   - Contains metadata for plugin configuration.
+    - Includes the main project as dependencies.
+    - Contains metadata for plugin configuration.
 
-   Example:
+    Example:
 
-   ```toml
-   [package]
-   name = "my_application"
-   version = "0.1.0"
-   edition = "2024"
+    ```toml
+    [package]
+    name = "my_application"
+    version = "0.1.0"
+    edition = "2024"
 
-   [dependencies]
-   main_project = "0.1.0"
+    [dependencies]
+    main_project = "0.1.0"
 
-   [package.metadata.plugins]
-   my_plugin = "/path/to/libmy_plugin.so"
-   ```
+    [package.metadata.plugins]
+    my_plugin = "/path/to/libmy_plugin.so"
+    ```
 
 The main differences between these Cargo.toml files are:
 
 1. The Main Project Cargo.toml sets up the core project that will use plugins:
-   - It includes the plugin_manager as a dependency.
-   - It doesn't specify crate-type or contain plugin metadata.
-   - The plugins it can load are determined by the End-User's project configuration.
+    - It includes the plugin_manager as a dependency.
+    - It doesn't specify crate-type or contain plugin metadata.
+    - The plugins it can load are determined by the End-User's project configuration.
 
 2. The Plugin Project Cargo.toml configures individual plugin projects:
-   - It includes the plugin_manager as a dependency.
-   - It specifies crate-type as both "lib" and "cdylib" to produce a dynamic library.
-   - It doesn't contain any plugin metadata configuration.
+    - It includes the plugin_manager as a dependency.
+    - It specifies crate-type as both "lib" and "cdylib" to produce a dynamic library.
+    - It doesn't contain any plugin metadata configuration.
 
 3. The End-User Project Cargo.toml configures the application that will use the main project and its plugins:
-   - It includes the main project (not the plugin_manager directly) as a dependency.
-   - It contains the metadata for plugin configuration, specifying which plugins to load and how to group them.
+    - It includes the main project (not the plugin_manager directly) as a dependency.
+    - It contains the metadata for plugin configuration, specifying which plugins to load and how to group them.
 
 ## Plugin Configuration
 

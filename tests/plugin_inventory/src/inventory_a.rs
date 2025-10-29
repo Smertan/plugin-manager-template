@@ -13,10 +13,6 @@ impl Plugin for InventoryA {
         println!("Executing Inventory A");
         Ok(())
     }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 }
 impl PluginInventory for InventoryA {
     fn load(&self) {

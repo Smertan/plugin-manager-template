@@ -32,18 +32,11 @@ pub struct PluginManager {
 }
 
 pub trait Plugin: Send + Sync + Any {
-    /// The `as_any` method allows for dynamic access to methods which
-    /// are not covered in the `Plugin` trait.
-    fn as_any(&self) -> &dyn Any;
-
     /// The name of the plugin. This is used to identify the plugin and
     /// to associate it with the context.
     fn name(&self) -> String;
 
     /// Executes a single function with the provided context.
-    ///
-    /// If the plugin has other methods, they can be accessed through
-    /// the `as_any` method.
     fn execute(&self, context: &dyn Any) -> Result<(), Box<dyn std::error::Error>>;
 
     /// Returns the group name
