@@ -1,5 +1,6 @@
 [template]
 ignore = [
+    ".vscode/",
     "target",
     "tests/target",
     "Cargo.lock",
