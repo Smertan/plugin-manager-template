@@ -144,15 +144,6 @@ pub trait AnalyticsPlugin: Plugin {
         "AnalyticsPlugin".to_string()
     }
 }
-
-impl<T> AnalyticsPlugin for T
-where
-    T: Plugin + Fn() + 'static,
-{
-    fn flush_metrics(&self) {
-        // default impl; concrete plugins are free to override
-    }
-}
 ```
 
 Concrete plugins implement the supertrait instead of the base trait directly:
