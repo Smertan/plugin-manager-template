@@ -1,4 +1,4 @@
-use plugin_manager::Plugin;
+use plugin_manager::plugin_types::Plugin;
 use std::any::Any;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -12,10 +12,6 @@ impl Plugin for TaskA {
     fn execute(&self, _context: &dyn Any) -> Result<(), Box<dyn std::error::Error>> {
         println!("Executing Task A");
         Ok(())
-    }
-
-    fn as_any(&self) -> &dyn Any {
-        self
     }
 }
 impl TaskA {

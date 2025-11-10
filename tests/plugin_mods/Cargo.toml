@@ -1,17 +1,16 @@
 [package]
-name = "plugin_mods"
+name = "plugin-mods"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-plugin-manager = { path = "../../plugin_manager" }
+plugin-manager = { path = "../../{{ crate_name }}_plugin_manager" }
 
 [package.metadata.plugins]
 plugin_a_b = "../target/release/libplugin_mods.so"
 
 [package.metadata.plugins.inventory]
 inventory_a = "../target/release/libplugin_inventory.so"
-
 
 [lib]
 crate-type = ["lib", "cdylib"]

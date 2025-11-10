@@ -1,7 +1,7 @@
-use plugin_manager::Plugin;
+use plugin_manager::plugin_types::{Plugin, PluginInventory};
 use std::any::Any;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct InventoryA;
 
 impl Plugin for InventoryA {
@@ -13,13 +13,9 @@ impl Plugin for InventoryA {
         println!("Executing Inventory A");
         Ok(())
     }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 }
-impl InventoryA {
-    pub fn other_method(&self) {
+impl PluginInventory for InventoryA {
+    fn load(&self) {
         println!("Executing other method in Inventory A");
     }
 }

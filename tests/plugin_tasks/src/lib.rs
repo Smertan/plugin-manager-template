@@ -1,8 +1,8 @@
 pub mod task_a;
-use plugin_manager::Plugin;
+use plugin_manager::plugin_types::Plugins;
 
 #[unsafe(no_mangle)]
-pub fn create_plugins() -> Vec<Box<dyn Plugin>> {
-    let plugins: Vec<Box<dyn Plugin>> = vec![Box::new(task_a::TaskA)];
+pub fn create_plugins() -> Vec<Plugins> {
+    let plugins = vec![Plugins::Base(Box::new(task_a::TaskA))];
     plugins
 }

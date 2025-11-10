@@ -1,0 +1,19 @@
+[template]
+ignore = [
+    ".vscode/",
+    "target",
+    "tests/target",
+    "Cargo.lock",
+    "plugin_manager_pre.sh",
+]
+
+exclude = [
+    "plugin_types/*/lib.rs",
+    "**/plugin_types.rs"
+]
+
+[placeholders]
+github-username = { prompt = "Enter the github username for the plugin_manager repo", type = "string" }
+
+[hooks]
+pre = ["plugin_manager.rhai"]

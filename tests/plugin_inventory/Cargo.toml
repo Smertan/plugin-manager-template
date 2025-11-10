@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-plugin-manager = { path = "../../plugin_manager" }
+plugin-manager = { path = "../../{{ crate_name }}_plugin_manager" }
 
 [lib]
 name = "plugin_inventory"

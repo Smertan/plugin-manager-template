@@ -1,48 +1,95 @@
-# Plugin Manager
+# Plugin Manager Template
 
-![Crates.io Version](https://img.shields.io/crates/v/plugin-manager)
-![GitHub License](https://img.shields.io/github/license/Smertan/plugin-manager)
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Smertan/plugin-manager/ci.yml)
 
+Reusable `cargo-generate` template for bootstrapping a plugin-oriented Rust workspace. It comes with a production-ready plugin manager crate, example plugins, and metadata-driven configuration so you can focus on behavior instead of wiring.
 
-A flexible and easy-to-use plugin management system for Rust applications. It provides a robust foundation for building plugin-based architectures
-in Rust applications.
+## Why use this template?
 
-The `Plugin Manager` library allows dynamic loading, registration, and management of plugins at runtime. It supports individual plugins and grouped plugins, making it suitable for various application architectures.
+- Dynamic loading of plugins from shared libraries (`.so`, `.dll`, `.dylib`)
+- Registration/deregistration APIs plus grouped plugin support
+- Metadata-driven activation via the end-user’s `Cargo.toml`
+- Sample plugin crates that illustrate best practices
+- Automated name substitution handled by Rhai + shell hooks
 
-## Features
+## Prerequisites
 
-- Dynamic loading of plugins from shared object files (`.so` *Linux*, `.dll` *Windows*, `.dylib` *MacOS*)
-- Support for individual and grouped plugins
-- Plugin registration and deregistration
-- Execution of plugin functionality
-- Metadata-driven plugin configuration
+- Latest stable Rust toolchain
+- `cargo generate` (install with `cargo install cargo-generate`)
+- A Git URL or local path to this repository
 
-## Installation
+## Quick start with `cargo generate`
 
-The package can either be installed via `cargo add` or the `Cargo.toml` file.
+1. Install the tool once:
 
-**cargo add**
+   ```sh
+   cargo install cargo-generate
+   ```
+
+2. Generate a new project (replace the repo URL and name as needed):
+
+   ```sh
+   cargo generate \
+     --git https://github.com/Smertan/plugin-manager \
+     --branch main \
+     --name game_plugins
+   ```
+
+   - Use `--path .` instead of `--git …` when running from a local checkout.
+   - `cargo-generate` will prompt for `github-username`; the value is used in the generated README badges.
+
+3. Change into the newly created workspace and verify everything compiles:
+
+   ```sh
+   cd game_plugins
+   cargo test
+   ```
+
+## Template inputs and hooks
+
+| Placeholder         | Source                                 | Purpose                                      |
+|---------------------|----------------------------------------|----------------------------------------------|
+| `project-name`      | Inferred from `--name` (e.g. `game_plugins`) | Becomes the crate/workspace identifier      |
+| `github-username`   | Prompted at generation time            | Used in README shields and docs              |
+
+During generation a Rhai hook (`plugin_manager.rhai`) calls `plugin_manager_pre.sh`, which normalizes names across `Cargo.toml` files (the manager crate and the sample plugins in `tests/`). You do not need to run these scripts manually.
+
+## What gets generated?
 
 ```sh
-cargo add plugin-manager
-```
-or
-
-**Cargo.toml file**
-
-```toml
-[dependencies]
-plugin-manager = "0.1.0"
+.
+├── {{ crate_name }}_plugin_manager        # Library crate containing PluginManager + traits
+├── tests/
+│   ├── plugin_inventory         # Example plugin crate
+│   ├── plugin_mods              # Example plugin crate
+│   └── plugin_tasks             # Example plugin crate
+└── Cargo.toml                   # Workspace manifest already wired up
 ```
 
-## Creating Plugins
-To create a plugin, implement the `Plugin` trait and export a `create_plugins` function:
-The `as_any` method is required to allow access to the methods not
-mentioned in the `Plugin` trait, and needs to be set up to return self.
+- The library crate exports `PluginManager`, `Plugin`, and helpers under `src/`.
+- Example plugin crates illustrate how to compile `cdylib` artifacts and how metadata in an end-user project should map plugin names to shared objects.
+- You can remove the sample crates or adapt them as fixtures for integration tests.
+
+## Building your plugin manager library
+
+Inside `{{ crate_name }}_plugin_manager` you will find a ready-to-publish crate. Key points:
+
+- `src/lib.rs` documents all APIs and describes how plugins should expose a `create_plugins` function returning `Vec<Box<dyn Plugin>>`.
+- `src/plugin_types.rs` defines the `Plugin` trait and supporting types.
+- `src/plugin_structs.rs` holds the runtime data structures used by `PluginManager`.
+
+Run the workspace tests at the root to validate changes:
+
+```sh
+cargo test
+```
+
+## Creating plugins
+
+When authoring new plugins, implement the `Plugin` trait and export a factory:
 
 ```rust
-use plugin_manager::Plugin;
+use plugin_manager::plugin_types::Plugin;
 use std::any::Any;
 
 #[derive(Debug)]
@@ -57,10 +104,6 @@ impl Plugin for MyPlugin {
         println!("Executing MyPlugin");
         Ok(())
     }
-
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
 }
 
 #[unsafe(no_mangle)]
@@ -69,170 +112,97 @@ pub fn create_plugins() -> Vec<Box<dyn Plugin>> {
 }
 ```
 
-## Setting up Cargo.toml for Plugins
-
-When creating a plugin, you need to set up your `Cargo.toml` file correctly:
-
-1. Add the `plugin_manager` as a dependency:
+### Plugin `Cargo.toml`
 
 ```toml
+[package]
+name = "my_plugin"
+version = "0.1.0"
+edition = "2021"
+
 [dependencies]
-plugin_manager = "0.1.0"
-```
+plugin_manager = { path = "../{{ crate_name }}_plugin_manager" }
 
-2. Configure the library to be both a Rust library and a dynamic library:
-
-```toml
 [lib]
-name = "your_plugin_name"
+name = "my_plugin"
 crate-type = ["lib", "cdylib"]
 ```
 
-This configuration allows your plugin to be compiled as both a Rust library
-and a dynamic library, which is necessary for the PluginManager to load it at runtime.
+Compile plugins with `cargo build --release` so the resulting `.so/.dll/.dylib` can be loaded at runtime.
 
-## Building the Plugin
+## Extending the plugin trait with supertraits
 
-To build your plugin for use with the main project:
+The base `Plugin` trait (see `{{ crate_name }}_plugin_manager/src/plugin_types.rs`) already enforces `Send + Sync + Any` and defines `name`, `execute`, and an overridable `group`. You can layer additional capabilities on top by creating supertraits that extend `Plugin`. This keeps shared functionality centralized while letting specialized plugins add new required methods.
 
-1. Navigate to your plugin's directory.
-2. Run the following command to build the plugin as a dynamic library:
+Example: define an analytics-oriented plugin type with an extra `flush_metrics` method and a default `group`:
 
-   ```bash
-   cargo build --release
-   ```
+```rust
+pub trait AnalyticsPlugin: Plugin {
+    fn flush_metrics(&self);
 
-3. The compiled dynamic library will be in the `target/release` directory with a name like
-   `libyour_plugin_name.so` (on Linux), `libyour_plugin_name.dylib` (on macOS),
-   or `your_plugin_name.dll` (on Windows).
+    fn group(&self) -> String {
+        "AnalyticsPlugin".to_string()
+    }
+}
+```
 
-## Differences between Cargo.toml Files
+Concrete plugins implement the supertrait instead of the base trait directly:
 
-Both the main project using plugins and the individual plugin projects are end users of the plugin_manager.
+```rust
+pub struct MetricsPlugin;
 
-1. Main Project Cargo.toml:
-   - Located in the root of the project that will use plugins.
-   - Includes `plugin_manager` as a dependency.
-   - Does not need the `crate-type` specification.
-   - Does not contain any metadata for plugin configuration.
-   - The loaded plugins are dependant on the plugins specified in the `End-User's` project Cargo.toml.
+impl Plugin for MetricsPlugin {
+    fn name(&self) -> String { "metrics".into() }
+    fn execute(&self, _: &dyn Any) -> Result<(), Box<dyn std::error::Error>> { Ok(()) }
+}
 
-   Example:
+impl AnalyticsPlugin for MetricsPlugin {
+    fn flush_metrics(&self) {
+        println!("flushing stats");
+    }
+}
+```
 
-   ```toml
-   [package]
-   name = "main_project"
-   version = "0.1.0"
-   edition = "2024"
+If you want the runtime to treat analytics plugins differently (for example, to expose `flush_metrics` through the `Plugins` enum), add a new enum variant and update `PluginManager`’s registration/execution paths to match:
 
-   [dependencies]
-   plugin_manager = "0.1.0"
-   ```
+```rust
+pub enum Plugins {
+    Base(Box<dyn Plugin>),
+    Inventory(Box<dyn PluginInventory>),
+    Analytics(Box<dyn AnalyticsPlugin>),
+}
+```
 
-2. Plugin Project Cargo.toml:
+Because each supertrait still inherits from `Plugin`, the manager can fall back to the common `execute` flow while also opting into specialized behaviors when the variant matches.
 
-   - Located in a separate project directory for each plugin.
-   - Includes `plugin_manager` as a dependency.
-   - Specifies `crate-type = ["lib", "cdylib"]` to build as both a Rust library and a dynamic library.
-   - Does not contain plugin metadata configuration.
+## Wiring plugins into applications
 
-   Example:
-
-   ```toml
-   [package]
-   name = "my_plugin"
-   version = "0.1.0"
-   edition = "2024"
-
-   [dependencies]
-   plugin_manager = "0.1.0"
-
-   [lib]
-   name = "my_plugin"
-   crate-type = ["lib", "cdylib"]
-   ```
-
-3. End-User Project Cargo.toml:
-
-   - Includes the main project as dependencies.
-   - Contains metadata for plugin configuration.
-
-   Example:
-
-   ```toml
-   [package]
-   name = "my_application"
-   version = "0.1.0"
-   edition = "2024"
-
-   [dependencies]
-   main_project = "0.1.0"
-
-   [package.metadata.plugins]
-   my_plugin = "/path/to/libmy_plugin.so"
-   ```
-
-The main differences between these Cargo.toml files are:
-
-1. The Main Project Cargo.toml sets up the core project that will use plugins:
-   - It includes the plugin_manager as a dependency.
-   - It doesn't specify crate-type or contain plugin metadata.
-   - The plugins it can load are determined by the End-User's project configuration.
-
-2. The Plugin Project Cargo.toml configures individual plugin projects:
-   - It includes the plugin_manager as a dependency.
-   - It specifies crate-type as both "lib" and "cdylib" to produce a dynamic library.
-   - It doesn't contain any plugin metadata configuration.
-
-3. The End-User Project Cargo.toml configures the application that will use the main project and its plugins:
-   - It includes the main project (not the plugin_manager directly) as a dependency.
-   - It contains the metadata for plugin configuration, specifying which plugins to load and how to group them.
-
-## Plugin Configuration
-
-Plugins are configured in the `Cargo.toml` file of the end-user project:
+End-user applications load plugins through `package.metadata.plugins`:
 
 ```toml
 [package.metadata.plugins]
-plugin_a = "/path/to/plugin_a.so"
+task_scheduler = "/absolute/path/to/libtask_scheduler.so"
 
-[package.metadata.plugins.group_name]
-plugin_b = "/path/to/plugin_b.so"
-plugin_c = "/path/to/plugin_c.so"
+[package.metadata.plugins.analytics]
+metrics = "/path/to/libmetrics.so"
+logger = "/path/to/liblogger.so"
 ```
 
-## Usage
-
-Here's a basic example of how to use the `PluginManager`:
+At runtime:
 
 ```rust
 use plugin_manager::PluginManager;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create a new PluginManager
-    let mut plugin_manager = PluginManager::new();
-
-    // Activate plugins based on metadata in Cargo.toml
-    plugin_manager = plugin_manager.activate_plugins()?;
-    
-    // Execute a specific plugin
-    plugin_manager.execute_plugin("plugin_a", &())?;
-    
-    // Deregister a plugin
-    let deregistered = plugin_manager.deregister_plugin("plugin_b");
-    print!("Deregistered plugin: {:?}", deregistered);
-    
-    // Deregister all plugins
-    let deregistered = plugin_manager.deregister_all_plugins();
-    println!("Deregistered plugins: {:?}", deregistered);
+    let mut manager = PluginManager::new();
+    manager = manager.activate_plugins()?;
+    manager.execute_plugin("task_scheduler", &())?;
     Ok(())
 }
 ```
 
-## License
+## Next steps
 
-This project is licensed under the Apache License, Version 2.0 - see the LICENSE file for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Update the generated README badges with your GitHub org/repo (the placeholder is already filled if you supplied `github-username`).
+2. Replace or expand the sample plugin crates with real integrations.
+3. Publish the `{{ crate_name }}_plugin_manager` crate to crates.io or use it via a path/git dependency inside your applications.
