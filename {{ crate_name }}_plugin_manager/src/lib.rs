@@ -178,11 +178,11 @@
 //! # unsafe {
 //! #     std::env::set_var("CARGO_MANIFEST_PATH", "../tests/plugin_mods/Cargo.toml");
 //! # }
-//! use plugin_manager::PluginManagerNew;
+//! use plugin_manager::PluginManager;
 //!
 //! # fn doc_test() -> Result<(), Box<dyn std::error::Error>> {
 //! // Create a new PluginManager
-//! let mut plugin_manager = PluginManagerNew::new();
+//! let mut plugin_manager = PluginManager::new();
 //!
 //! // Activate plugins based on metadata in Cargo.toml
 //! plugin_manager = plugin_manager.activate_plugins()?;
@@ -225,13 +225,13 @@ pub struct Metadata {
     pub plugins: Option<HashMap<GroupOrName, PluginEntry>>,
 }
 
-pub struct PluginManagerNew {
+pub struct PluginManager {
     pub plugins: HashMap<PluginName, Plugins>,
     plugin_path: Vec<HashMap<GroupOrName, PluginEntry>>,
     libraries: Vec<libloading::Library>, // Add this to keep libraries alive
 }
 
-impl Default for PluginManagerNew {
+impl Default for PluginManager {
     fn default() -> Self {
         Self::new()
     }
@@ -249,16 +249,16 @@ macro_rules! get_plugins_by_variant {
     };
 }
 
-impl PluginManagerNew {
+impl PluginManager {
     pub fn new() -> Self {
-        PluginManagerNew {
+        PluginManager {
             plugins: HashMap::new(),
             plugin_path: Vec::new(),
             libraries: Vec::new(),
         }
     }
 
-    pub fn activate_plugins(mut self) -> Result<PluginManagerNew, Box<dyn std::error::Error>> {
+    pub fn activate_plugins(mut self) -> Result<PluginManager, Box<dyn std::error::Error>> {
         let meta_data = self.get_plugin_metadata();
         log::debug!("Plugin metadata: {:?}", meta_data);
         let mut registrations = Vec::new();
@@ -559,7 +559,7 @@ mod tests {
     #[test]
     fn get_plugin_path_test() {
         set_env_var();
-        let plugin_manager = PluginManagerNew::new();
+        let plugin_manager = PluginManager::new();
         let metadata = plugin_manager.get_plugin_metadata();
         let plugins = metadata.plugins;
         match plugins {
@@ -588,7 +588,7 @@ mod tests {
     #[test]
     fn get_plugin_metadata_test() {
         set_env_var();
-        let plugin_manager = PluginManagerNew::new();
+        let plugin_manager = PluginManager::new();
         let metadata = plugin_manager.get_plugin_metadata();
         assert!(metadata.plugins.is_some());
         // Check if the metadata contains the expected number of plugin paths.
@@ -598,7 +598,7 @@ mod tests {
     #[test]
     fn activate_plugins_test() {
         set_env_var();
-        let mut plugin_manager = PluginManagerNew::new();
+        let mut plugin_manager = PluginManager::new();
         plugin_manager = plugin_manager.activate_plugins().unwrap();
         assert!(plugin_manager.get_plugin("plugin_a").is_some());
         assert_eq!(plugin_manager.plugins.len(), 3);
@@ -609,14 +609,14 @@ mod tests {
     /// Test for duplicate activation of plugins.
     fn activate_plugins_and_panic_test() {
         set_env_var();
-        let mut plugin_manager = PluginManagerNew::new();
+        let mut plugin_manager = PluginManager::new();
         plugin_manager = plugin_manager.activate_plugins().unwrap();
         _ = plugin_manager.activate_plugins().unwrap();
     }
 
     #[test]
     fn load_plugin_test() {
-        let plugin_manager = PluginManagerNew::new();
+        let plugin_manager = PluginManager::new();
         let filename = make_file_path("plugin_mods");
         let (_library, plugins) = plugin_manager.load_plugin(&filename).unwrap();
         assert_eq!(plugins.len(), 2);
@@ -625,7 +625,7 @@ mod tests {
 
     #[test]
     fn load_plugin_and_panic_test() {
-        let plugin_manager = PluginManagerNew::new();
+        let plugin_manager = PluginManager::new();
         let filename = make_file_path("plugin_mods");
         let (_library, _) = plugin_manager.load_plugin(&filename).unwrap();
         let filename = make_file_path("plugin_mods");
@@ -637,7 +637,7 @@ mod tests {
     #[test]
     fn activate_plugins_with_groups_test() {
         set_env_var();
-        let plugin_manager = PluginManagerNew::new().activate_plugins().unwrap();
+        let plugin_manager = PluginManager::new().activate_plugins().unwrap();
 
         // Get all plugins in the "base" group
         let inventory_plugins = plugin_manager.get_plugins_by_type_base();
@@ -654,7 +654,7 @@ mod tests {
     #[test]
     fn get_all_plugin_names_and_groups_test() {
         set_env_var();
-        let plugin_manager = PluginManagerNew::new().activate_plugins().unwrap();
+        let plugin_manager = PluginManager::new().activate_plugins().unwrap();
         let all_plugins = plugin_manager.get_all_plugin_names_and_groups();
         assert_eq!(all_plugins.len(), 3);
         all_plugins
@@ -670,7 +670,7 @@ mod tests {
     #[test]
     fn deregister_plugin_test() {
         set_env_var();
-        let mut plugin_manager = PluginManagerNew::new().activate_plugins().unwrap();
+        let mut plugin_manager = PluginManager::new().activate_plugins().unwrap();
         assert_eq!(plugin_manager.plugins.len(), 3);
 
         // Deregister individual plugin
@@ -695,7 +695,7 @@ mod tests {
     #[test]
     fn deregister_all_plugins_test() {
         set_env_var();
-        let mut plugin_manager = PluginManagerNew::new().activate_plugins().unwrap();
+        let mut plugin_manager = PluginManager::new().activate_plugins().unwrap();
         assert_eq!(plugin_manager.plugins.len(), 3);
 
         // Deregister all plugins
@@ -707,7 +707,7 @@ mod tests {
     #[test]
     fn plugin_manager_new_test() {
         set_env_var();
-        let mut plugin_manager = PluginManagerNew::new();
+        let mut plugin_manager = PluginManager::new();
         assert_eq!(plugin_manager.plugins.len(), 0);
         plugin_manager = plugin_manager.activate_plugins().unwrap();
         assert_eq!(plugin_manager.plugins.len(), 3);
@@ -716,7 +716,7 @@ mod tests {
     #[test]
     fn execute_plugin_test() {
         set_env_var();
-        let plugin_manager = PluginManagerNew::new().activate_plugins().unwrap();
+        let plugin_manager = PluginManager::new().activate_plugins().unwrap();
         let plugin_name = "plugin_a";
         if let Some(plugin) = plugin_manager.get_plugin(plugin_name) {
             let execution = plugin.execute(&());
@@ -729,7 +729,7 @@ mod tests {
     #[test]
     fn get_plugins_by_type_test() {
         set_env_var();
-        let plugin_manager = PluginManagerNew::new().activate_plugins().unwrap();
+        let plugin_manager = PluginManager::new().activate_plugins().unwrap();
         let base_plugins = plugin_manager.get_plugins_by_type_base();
         assert_eq!(base_plugins.len(), 2);
 
@@ -754,7 +754,7 @@ mod tests {
     fn with_path_test() {
         set_env_var();
         let path = make_file_path("plugin_tasks");
-        let plugin_manager = PluginManagerNew::new()
+        let plugin_manager = PluginManager::new()
             .with_path(&path, None)
             .unwrap()
             .activate_plugins()
