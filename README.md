@@ -57,6 +57,18 @@ During generation a Rhai hook (`plugin_manager.rhai`) calls `plugin_manager_pre.
 
 If you generate the template from inside an existing workspace (so the manager crate ends up one directory deeper), answer `true` when prompted for `workspace`. The hook will rewrite the integration-test helpers and sample manifest metadata so they look for plugin artifacts under `../../target/release`, matching the nested layout.
 
+## Maintaining workspace members
+
+The legacy `main.py` helper has been replaced with a tiny Rust CLI located at `scripts/workspace_manager`. It makes sure the sample plugin crates (`tests/plugin_inventory`, `tests/plugin_mods`, `tests/plugin_tasks`) and the `milas/plugin` fixture stay listed under `[workspace].members` in the root `Cargo.toml`.
+
+Run it whenever you add or remove workspace members to automatically reinsert the required fixtures:
+
+```sh
+cargo run --manifest-path scripts/workspace_manager/Cargo.toml
+```
+
+The tool only depends on the standard Rust toolchain, so no Python interpreter is required anymore.
+
 ## What gets generated?
 
 ```sh

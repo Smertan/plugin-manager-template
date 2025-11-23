@@ -5,6 +5,9 @@ ignore = [
     "tests/target",
     "Cargo.lock",
     "plugin_manager_pre.sh",
+    "venv",
+    "./README.md",
+    "scripts/",
 ]
 
 exclude = [

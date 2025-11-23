@@ -1,0 +1,10 @@
+[package]
+name = "workspace_manager"
+version = "0.1.0"
+edition = "2021"
+description = "Ensures required plugin crates are listed in the workspace manifest"
+license = "Apache-2.0"
+
+[dependencies]
+anyhow = "1.0"
+toml_edit = "0.22"
