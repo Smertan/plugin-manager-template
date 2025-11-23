@@ -1,7 +1,7 @@
 use std::{env, fs, path::PathBuf};
 
 use anyhow::{Context, Result};
-use toml_edit::DocumentMut;
+use toml::Value;
 
 const REQUIRED_MEMBERS: &[&str] = &[
     "tests/plugin_inventory",
@@ -21,12 +21,14 @@ fn main() -> Result<()> {
     let manifest = fs::read_to_string(&cargo_path)
         .with_context(|| format!("Unable to read {}", manifest_label))?;
 
-    let mut document = manifest
-        .parse::<DocumentMut>()
-        .context("Failed to parse Cargo.toml")?;
-
-    let members = document["workspace"]["members"]
-        .as_array_mut()
+    let mut document: Value = toml::from_str(&manifest).context("Failed to parse Cargo.toml")?;
+    let workspace = document
+        .get_mut("workspace")
+        .and_then(Value::as_table_mut)
+        .context("workspace must be a table")?;
+    let members = workspace
+        .get_mut("members")
+        .and_then(Value::as_array_mut)
         .context("workspace.members must be an array")?;
 
     print_header(&manifest_label);
@@ -36,14 +38,16 @@ fn main() -> Result<()> {
         if members.iter().any(|entry| entry.as_str() == Some(*member)) {
             println!("✓ {member} is already included in the workspace");
         } else {
-            members.push(*member);
+            members.push(Value::from(*member));
             changed = true;
             println!("+ Added {member} to the workspace");
         }
     }
 
     if changed {
-        fs::write(&cargo_path, document.to_string())
+        let formatted =
+            toml::to_string_pretty(&document).context("Failed to serialize Cargo.toml")?;
+        fs::write(&cargo_path, formatted)
             .with_context(|| format!("Unable to write {}", manifest_label))?;
         println!("Cargo.toml updated successfully.");
     } else {

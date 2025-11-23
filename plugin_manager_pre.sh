@@ -61,7 +61,6 @@ function ensure_workspace_members() {
     fi
 
     echo "Ensuring required workspace members are present in '$DESTINATION_DIRECTORY'."
-    cargo run --quiet --manifest-path "$manifest_path" -- "$DESTINATION_DIRECTORY"
     if ! cargo run --quiet --manifest-path "$manifest_path" -- "$DESTINATION_DIRECTORY"; then
         echo "Failed to run workspace_manager; please check the Rust toolchain." >&2
     fi
