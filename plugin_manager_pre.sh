@@ -16,13 +16,7 @@ FILES=(
     "tests/plugin_inventory/Cargo.toml"
 )
 
-function update_file() {
-    sed -i \
-        -e "s/^name = \"plugin-manager\"/name = \"${PROJECT_NAME}\"/" \
-        -e "s/^plugin-manager/${PROJECT_NAME}/" \
-        "$1"
-    echo "Updated '$1' with '${PROJECT_NAME}'."
-}
+WORKSPACE_MANAGER_MANIFEST="scripts/workspace_manager/Cargo.toml"
 
 # function update_workspace_paths() {
 #     local lib_file="{{ crate_name }}_plugin_manager/src/lib.rs"
@@ -49,9 +43,8 @@ function update_file() {
 # }
 
 function ensure_workspace_members() {
-    local manifest_path="scripts/workspace_manager/Cargo.toml"
-    if [ ! -f "$manifest_path" ]; then
-        echo "workspace_manager manifest not found at '$manifest_path'."
+    if [ ! -f "$WORKSPACE_MANAGER_MANIFEST" ]; then
+        echo "workspace_manager manifest not found at '$WORKSPACE_MANAGER_MANIFEST'."
         return
     fi
 
@@ -61,8 +54,26 @@ function ensure_workspace_members() {
     fi
 
     echo "Ensuring required workspace members are present in '$DESTINATION_DIRECTORY'."
-    if ! cargo run --quiet --manifest-path "$manifest_path" -- "$DESTINATION_DIRECTORY"; then
+    if ! cargo run --quiet --manifest-path "$WORKSPACE_MANAGER_MANIFEST" -- "$DESTINATION_DIRECTORY"; then
         echo "Failed to run workspace_manager; please check the Rust toolchain." >&2
+    fi
+}
+
+function update_manifest_files() {
+    if [ ! -f "$WORKSPACE_MANAGER_MANIFEST" ]; then
+        echo "workspace_manager manifest not found at '$WORKSPACE_MANAGER_MANIFEST'."
+        exit 1
+    fi
+
+    if ! command -v cargo >/dev/null 2>&1; then
+        echo "cargo command not found; unable to update Cargo manifests." >&2
+        exit 1
+    fi
+
+    echo "Updating Cargo manifests with '${PROJECT_NAME}'."
+    if ! cargo run --quiet --manifest-path "$WORKSPACE_MANAGER_MANIFEST" -- rename-manifests "$PROJECT_NAME" "${FILES[@]}"; then
+        echo "Failed to update Cargo manifests; please check the Rust toolchain." >&2
+        exit 1
     fi
 }
 
@@ -71,12 +82,13 @@ echo "Checking for required files:"
 for file in "${FILES[@]}"; do
     if [ -f "$file" ]; then
         echo "File '$file' exists."
-        update_file "$file"
     else
         echo "File '$file' does not exist."
         exit 1
     fi
 done
+
+update_manifest_files
 
 if [ "$WORKSPACE_FLAG" == "true" ]; then
     echo "Applying workspace path overrides."

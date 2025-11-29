@@ -1,6 +1,9 @@
-use std::{env, fs, path::PathBuf};
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+};
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use toml::Value;
 
 const REQUIRED_MEMBERS: &[&str] = &[
@@ -10,7 +13,66 @@ const REQUIRED_MEMBERS: &[&str] = &[
 ];
 
 fn main() -> Result<()> {
-    let destination = env::args_os().nth(1).map(PathBuf::from);
+    match parse_command()? {
+        Command::EnsureMembers { destination } => ensure_workspace_members(destination)?,
+        Command::RenameManifests {
+            project_name,
+            manifests,
+        } => rename_manifests(&project_name, manifests)?,
+    }
+
+    Ok(())
+}
+
+fn print_header(label: &str) {
+    const WIDTH: usize = 80;
+    let label_len = label.len();
+    let fill = WIDTH.saturating_sub(label_len);
+    let left = fill / 2;
+    let right = fill - left;
+    println!("{}{}{}", "-".repeat(left), label, "-".repeat(right));
+}
+
+enum Command {
+    EnsureMembers { destination: Option<PathBuf> },
+    RenameManifests {
+        project_name: String,
+        manifests: Vec<PathBuf>,
+    },
+}
+
+fn parse_command() -> Result<Command> {
+    let mut args = env::args_os().skip(1);
+    match args.next() {
+        None => Ok(Command::EnsureMembers { destination: None }),
+        Some(first) => {
+            if first.to_str() == Some("rename-manifests") {
+                let project_name = args
+                    .next()
+                    .context("rename-manifests requires a project name argument")?;
+                let project_name = project_name
+                    .into_string()
+                    .map_err(|_| anyhow!("project name must be valid UTF-8"))?;
+                let manifests: Vec<PathBuf> = args.map(PathBuf::from).collect();
+                if manifests.is_empty() {
+                    return Err(anyhow!(
+                        "rename-manifests requires at least one manifest path"
+                    ));
+                }
+                Ok(Command::RenameManifests {
+                    project_name,
+                    manifests,
+                })
+            } else {
+                Ok(Command::EnsureMembers {
+                    destination: Some(PathBuf::from(first)),
+                })
+            }
+        }
+    }
+}
+
+fn ensure_workspace_members(destination: Option<PathBuf>) -> Result<()> {
     let cargo_path = match destination.as_ref() {
         Some(path) if path.is_dir() => path.join("Cargo.toml"),
         Some(path) => path.clone(),
@@ -57,11 +119,74 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn print_header(label: &str) {
-    const WIDTH: usize = 80;
-    let label_len = label.len();
-    let fill = WIDTH.saturating_sub(label_len);
-    let left = fill / 2;
-    let right = fill - left;
-    println!("{}{}{}", "-".repeat(left), label, "-".repeat(right));
+fn rename_manifests(project_name: &str, manifests: Vec<PathBuf>) -> Result<()> {
+    for manifest in manifests {
+        update_manifest(project_name, &manifest)?;
+    }
+    Ok(())
+}
+
+fn update_manifest(project_name: &str, manifest_path: &Path) -> Result<()> {
+    let manifest_label = format!("{}", manifest_path.display());
+    let manifest = fs::read_to_string(manifest_path)
+        .with_context(|| format!("Unable to read {}", manifest_label))?;
+    let mut document: Value =
+        toml::from_str(&manifest).with_context(|| format!("Failed to parse {}", manifest_label))?;
+
+    let mut changed = false;
+    if update_package_name(&mut document, project_name) {
+        println!("Set package name to '{project_name}' in {manifest_label}");
+        changed = true;
+    }
+
+    for section in ["dependencies", "dev-dependencies", "build-dependencies"] {
+        if rename_dependency_section(&mut document, section, project_name) {
+            println!(
+                "Renamed '{section}.plugin-manager' to '{section}.{project_name}' in {manifest_label}"
+            );
+            changed = true;
+        }
+    }
+
+    if changed {
+        let formatted = toml::to_string_pretty(&document)
+            .with_context(|| format!("Failed to serialize {}", manifest_label))?;
+        fs::write(manifest_path, formatted)
+            .with_context(|| format!("Unable to write {}", manifest_label))?;
+    } else {
+        println!("No changes required for {}", manifest_label);
+    }
+
+    Ok(())
+}
+
+fn update_package_name(document: &mut Value, project_name: &str) -> bool {
+    if let Some(package) = document
+        .get_mut("package")
+        .and_then(Value::as_table_mut)
+    {
+        if package
+            .get("name")
+            .and_then(Value::as_str)
+            == Some("plugin-manager")
+        {
+            if let Some(name) = package.get_mut("name") {
+                *name = Value::from(project_name);
+            }
+            return true;
+        }
+    }
+
+    false
+}
+
+fn rename_dependency_section(document: &mut Value, section: &str, project_name: &str) -> bool {
+    document
+        .get_mut(section)
+        .and_then(Value::as_table_mut)
+        .and_then(|table| table.remove("plugin-manager").map(|entry| (table, entry)))
+        .map(|(table, entry)| {
+            table.insert(project_name.to_string(), entry);
+        })
+        .is_some()
 }
