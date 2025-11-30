@@ -53,7 +53,7 @@ Reusable `cargo-generate` template for bootstrapping a plugin-oriented Rust work
 | `github-username`   | Prompted at generation time            | Used in README shields and docs              |
 | `workspace`         | Prompted (bool, default `false`)       | When `true`, adjusts test/env paths for nested workspaces |
 
-During generation a Rhai hook (`plugin_manager.rhai`) calls `plugin_manager_pre.sh`, which normalizes names across `Cargo.toml` files (the manager crate and the sample plugins in `tests/`). You do not need to run these scripts manually.
+During generation a Rhai hook (`plugin_manager.rhai`) runs the `scripts/workspace_manager` Rust helper via `cargo run`, which normalizes names across `Cargo.toml` files (the manager crate and the sample plugins in `tests/`). You do not need to run this helper manually during project creation.
 
 If you generate the template from inside an existing workspace (so the manager crate ends up one directory deeper), answer `true` when prompted for `workspace`. The hook will rewrite the integration-test helpers and sample manifest metadata so they look for plugin artifacts under `../../target/release`, matching the nested layout.
 

@@ -12,13 +12,17 @@ const REQUIRED_MEMBERS: &[&str] = &[
     "tests/plugin_tasks",
 ];
 
+const MANIFEST_PATHS: &[&str] = &[
+    "{{ crate_name }}_plugin_manager/Cargo.toml",
+    "tests/plugin_tasks/Cargo.toml",
+    "tests/plugin_mods/Cargo.toml",
+    "tests/plugin_inventory/Cargo.toml",
+];
+
 fn main() -> Result<()> {
     match parse_command()? {
         Command::EnsureMembers { destination } => ensure_workspace_members(destination)?,
-        Command::RenameManifests {
-            project_name,
-            manifests,
-        } => rename_manifests(&project_name, manifests)?,
+        Command::RenameManifests { project_name } => rename_manifests(&project_name)?,
     }
 
     Ok(())
@@ -35,10 +39,7 @@ fn print_header(label: &str) {
 
 enum Command {
     EnsureMembers { destination: Option<PathBuf> },
-    RenameManifests {
-        project_name: String,
-        manifests: Vec<PathBuf>,
-    },
+    RenameManifests { project_name: String },
 }
 
 fn parse_command() -> Result<Command> {
@@ -53,16 +54,12 @@ fn parse_command() -> Result<Command> {
                 let project_name = project_name
                     .into_string()
                     .map_err(|_| anyhow!("project name must be valid UTF-8"))?;
-                let manifests: Vec<PathBuf> = args.map(PathBuf::from).collect();
-                if manifests.is_empty() {
+                if args.next().is_some() {
                     return Err(anyhow!(
-                        "rename-manifests requires at least one manifest path"
+                        "rename-manifests only accepts the project name argument"
                     ));
                 }
-                Ok(Command::RenameManifests {
-                    project_name,
-                    manifests,
-                })
+                Ok(Command::RenameManifests { project_name })
             } else {
                 Ok(Command::EnsureMembers {
                     destination: Some(PathBuf::from(first)),
@@ -119,9 +116,9 @@ fn ensure_workspace_members(destination: Option<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-fn rename_manifests(project_name: &str, manifests: Vec<PathBuf>) -> Result<()> {
-    for manifest in manifests {
-        update_manifest(project_name, &manifest)?;
+fn rename_manifests(project_name: &str) -> Result<()> {
+    for manifest in MANIFEST_PATHS {
+        update_manifest(project_name, Path::new(manifest))?;
     }
     Ok(())
 }
@@ -161,15 +158,8 @@ fn update_manifest(project_name: &str, manifest_path: &Path) -> Result<()> {
 }
 
 fn update_package_name(document: &mut Value, project_name: &str) -> bool {
-    if let Some(package) = document
-        .get_mut("package")
-        .and_then(Value::as_table_mut)
-    {
-        if package
-            .get("name")
-            .and_then(Value::as_str)
-            == Some("plugin-manager")
-        {
+    if let Some(package) = document.get_mut("package").and_then(Value::as_table_mut) {
+        if package.get("name").and_then(Value::as_str) == Some("plugin-manager") {
             if let Some(name) = package.get_mut("name") {
                 *name = Value::from(project_name);
             }
