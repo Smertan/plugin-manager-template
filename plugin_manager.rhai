@@ -18,44 +18,10 @@ variable::set("project-name-title", project_name_title);
 variable::set("project-name-kebab-case", to_kebab_case(project_name));
 
 fn run_workspace_manager(step, command) {
+    // TODO: run the workspace manager command with both the project name and destination args.
     let ok = system::command(command);
-    // if !ok {
-    //     throw `${step} failed; inspect the workspace_manager output above for details.`;
-    // }
 }
 
-fn rename_manifests(project_name, workspace_manager_manifest) {
-    let command = `cargo run --quiet --manifest-path "${workspace_manager_manifest}" -- rename-manifests "${project_name}"`;
-    print("Updating Cargo manifests with workspace manager.");
-    run_workspace_manager("Manifest rewrite", command);
-}
-
-fn ensure_workspace_members(destination_directory, workspace_manager_manifest) {
-    let command = `cargo run --quiet --manifest-path "${workspace_manager_manifest}" -- "${destination_directory}"`;
-    print("Ensuring workspace members are synchronized.");
-    run_workspace_manager("Workspace member sync", command);
-}
-
-/// Updates the Cargo.toml files to the new project name and syncs workspace members when needed.
-fn post_generation(
-    project_name,
-    workspace_flag,
-    destination_directory,
-    workspace_manager_manifest,
-) {
-    rename_manifests(
-        to_kebab_case(project_name),
-        workspace_manager_manifest,
-    );
-
-    if workspace_flag == "true" {
-        ensure_workspace_members(destination_directory, workspace_manager_manifest);
-    }
-}
-
-post_generation(
-    project_name,
-    workspace_flag,
-    destination_directory,
-    workspace_manager_manifest,
-);
+let project_name_rust = variable::get("project-name-kebab-case").to_string();
+let command = `cargo run --quiet --manifest-path "${workspace_manager_manifest}" -- "${project_name_rust}" "${destination_directory}" "${workspace_flag}"`;
+run_workspace_manager("Project creation", command);

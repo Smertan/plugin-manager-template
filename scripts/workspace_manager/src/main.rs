@@ -19,11 +19,34 @@ const MANIFEST_PATHS: &[&str] = &[
     "tests/plugin_inventory/Cargo.toml",
 ];
 
-fn main() -> Result<()> {
-    match parse_command()? {
-        Command::EnsureMembers { destination } => ensure_workspace_members(destination)?,
-        Command::RenameManifests { project_name } => rename_manifests(&project_name)?,
+struct WorkspaceContext {
+    pub project_name: String,
+    pub destination_directory: String,
+    pub workspace_flag: bool,
+}
+
+impl WorkspaceContext {
+    fn new(project_name: String, destination_directory: String, workspace_flag: bool) -> Self {
+        Self {
+            project_name,
+            destination_directory,
+            workspace_flag,
+        }
     }
+}
+
+fn main() -> Result<()> {
+    let context = collect_args();
+    if context.workspace_flag {
+        update_workspace_members(Some(PathBuf::from(context.destination_directory)))?;
+    }
+    rename_manifests(&context.project_name)?;
+    // TODO: Test that all the functions work as expected with the provided project name and destination args
+
+    // match parse_command()? {
+    //     Command::EnsureMembers { destination } => ensure_workspace_members(destination)?,
+    //     Command::RenameManifests { project_name } => rename_manifests(&project_name)?,
+    // }
 
     Ok(())
 }
@@ -40,6 +63,25 @@ fn print_header(label: &str) {
 enum Command {
     EnsureMembers { destination: Option<PathBuf> },
     RenameManifests { project_name: String },
+}
+
+fn collect_args() -> WorkspaceContext {
+    let args = env::args_os().collect::<Vec<_>>();
+    let project_name = args[1].to_str().unwrap();
+    let destination_directory = args[2].to_str().unwrap();
+    let workspace_flag_set = args[3].to_str().unwrap();
+    match workspace_flag_set {
+        "true" => WorkspaceContext::new(
+            String::from(project_name),
+            String::from(destination_directory),
+            true, // Set to true if the current directory is part of a workspace
+        ),
+        _ => WorkspaceContext::new(
+            String::from(project_name),
+            String::from(destination_directory),
+            false, // Set to true if the current directory is part of a workspace
+        ),
+    }
 }
 
 fn parse_command() -> Result<Command> {
@@ -69,7 +111,7 @@ fn parse_command() -> Result<Command> {
     }
 }
 
-fn ensure_workspace_members(destination: Option<PathBuf>) -> Result<()> {
+fn update_workspace_members(destination: Option<PathBuf>) -> Result<()> {
     let cargo_path = match destination.as_ref() {
         Some(path) if path.is_dir() => path.join("Cargo.toml"),
         Some(path) => path.clone(),
