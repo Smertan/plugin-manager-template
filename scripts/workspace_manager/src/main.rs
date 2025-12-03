@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use toml::Value;
 
 const REQUIRED_MEMBERS: &[&str] = &[
@@ -41,13 +41,6 @@ fn main() -> Result<()> {
         update_workspace_members(Some(PathBuf::from(context.destination_directory)))?;
     }
     rename_manifests(&context.project_name)?;
-    // TODO: Test that all the functions work as expected with the provided project name and destination args
-
-    // match parse_command()? {
-    //     Command::EnsureMembers { destination } => ensure_workspace_members(destination)?,
-    //     Command::RenameManifests { project_name } => rename_manifests(&project_name)?,
-    // }
-
     Ok(())
 }
 
@@ -58,11 +51,6 @@ fn print_header(label: &str) {
     let left = fill / 2;
     let right = fill - left;
     println!("{}{}{}", "-".repeat(left), label, "-".repeat(right));
-}
-
-enum Command {
-    EnsureMembers { destination: Option<PathBuf> },
-    RenameManifests { project_name: String },
 }
 
 fn collect_args() -> WorkspaceContext {
@@ -81,33 +69,6 @@ fn collect_args() -> WorkspaceContext {
             String::from(destination_directory),
             false, // Set to true if the current directory is part of a workspace
         ),
-    }
-}
-
-fn parse_command() -> Result<Command> {
-    let mut args = env::args_os().skip(1);
-    match args.next() {
-        None => Ok(Command::EnsureMembers { destination: None }),
-        Some(first) => {
-            if first.to_str() == Some("rename-manifests") {
-                let project_name = args
-                    .next()
-                    .context("rename-manifests requires a project name argument")?;
-                let project_name = project_name
-                    .into_string()
-                    .map_err(|_| anyhow!("project name must be valid UTF-8"))?;
-                if args.next().is_some() {
-                    return Err(anyhow!(
-                        "rename-manifests only accepts the project name argument"
-                    ));
-                }
-                Ok(Command::RenameManifests { project_name })
-            } else {
-                Ok(Command::EnsureMembers {
-                    destination: Some(PathBuf::from(first)),
-                })
-            }
-        }
     }
 }
 

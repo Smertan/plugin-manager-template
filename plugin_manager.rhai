@@ -20,6 +20,7 @@ variable::set("project-name-kebab-case", to_kebab_case(project_name));
 fn run_workspace_manager(step, command) {
     // TODO: run the workspace manager command with both the project name and destination args.
     let ok = system::command(command);
+    print(ok);
 }
 
 let project_name_rust = variable::get("project-name-kebab-case").to_string();
