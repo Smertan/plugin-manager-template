@@ -21,7 +21,7 @@ jobs:
       - uses: cargo-generate/cargo-generate-action@latest
         with:
           name: ${{ env.PROJECT_NAME }}
-          arguments: "--allow-commands -d github-username=Smertan -d work_space=false"
+          arguments: "--allow-commands -d github-username=Smertan -d workspace=false"
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: stable
