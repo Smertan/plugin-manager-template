@@ -32,11 +32,14 @@ Reusable `cargo-generate` template for bootstrapping a plugin-oriented Rust work
    cargo generate \
      --git https://github.com/Smertan/plugin-manager \
      --branch main \
-     --name game_plugins
+     --name game_plugins \
+     --define github-username={TARGET-USERNAME} \
+     --allow-commands
    ```
 
    - Use `--path .` instead of `--git …` when running from a local checkout.
    - `cargo-generate` will prompt for `github-username`; the value is used in the generated README badges.
+   - `--allow-commands` permits the Rhai hook script to execute without prompting for confirmation to update the various toml files.
 
 3. Change into the newly created workspace and verify everything compiles:
 
@@ -55,11 +58,11 @@ Reusable `cargo-generate` template for bootstrapping a plugin-oriented Rust work
 
 During generation a Rhai hook (`plugin_manager.rhai`) runs the `scripts/workspace_manager` Rust helper via `cargo run`, which normalizes names across `Cargo.toml` files (the manager crate and the sample plugins in `tests/`). You do not need to run this helper manually during project creation.
 
-If you generate the template from inside an existing workspace (so the manager crate ends up one directory deeper), answer `true` when prompted for `workspace`. The hook will rewrite the integration-test helpers and sample manifest metadata so they look for plugin artifacts under `../../target/release`, matching the nested layout.
+If you generate the template from inside an existing workspace (so the manager crate ends up one directory deeper), answer `true` when prompted for `workspace`. The hook will rewrite the workspace Cargo.toml file adding the integration test paths.
 
 ## Maintaining workspace members
 
-The legacy `main.py` helper has been replaced with a tiny Rust CLI located at `scripts/workspace_manager`. It makes sure the sample plugin crates (`tests/plugin_inventory`, `tests/plugin_mods`, `tests/plugin_tasks`) and the `milas/plugin` fixture stay listed under `[workspace].members` in the root `Cargo.toml`.
+The legacy `main.py` helper has been replaced with a tiny Rust CLI located at `scripts/workspace_manager`. It makes sure the sample plugin crates (`tests/plugin_inventory`, `tests/plugin_mods`, `tests/plugin_tasks`) fixture stay listed under `[workspace].members` in the root `Cargo.toml`.
 
 Run it whenever you add or remove workspace members to automatically reinsert the required fixtures:
 
@@ -67,7 +70,7 @@ Run it whenever you add or remove workspace members to automatically reinsert th
 cargo run --manifest-path scripts/workspace_manager/Cargo.toml
 ```
 
-The tool only depends on the standard Rust toolchain, so no Python interpreter is required anymore.
+The tool only depends on the standard Rust toolchain, making it compatible with any environment.
 
 ## What gets generated?
 
