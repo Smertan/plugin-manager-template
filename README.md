@@ -58,19 +58,7 @@ Reusable `cargo-generate` template for bootstrapping a plugin-oriented Rust work
 
 During generation a Rhai hook (`plugin_manager.rhai`) runs the `scripts/workspace_manager` Rust helper via `cargo run`, which normalizes names across `Cargo.toml` files (the manager crate and the sample plugins in `tests/`). You do not need to run this helper manually during project creation.
 
-If you generate the template from inside an existing workspace (so the manager crate ends up one directory deeper), answer `true` when prompted for `workspace`. The hook will rewrite the workspace Cargo.toml file adding the integration test paths.
-
-## Maintaining workspace members
-
-The legacy `main.py` helper has been replaced with a tiny Rust CLI located at `scripts/workspace_manager`. It makes sure the sample plugin crates (`tests/plugin_inventory`, `tests/plugin_mods`, `tests/plugin_tasks`) fixture stay listed under `[workspace].members` in the root `Cargo.toml`.
-
-Run it whenever you add or remove workspace members to automatically reinsert the required fixtures:
-
-```sh
-cargo run --manifest-path scripts/workspace_manager/Cargo.toml
-```
-
-The tool only depends on the standard Rust toolchain, making it compatible with any environment.
+If you generate the template from inside an existing workspace (so the manager crate ends up one directory deeper), answer `true` when prompted for `workspace`. The hook will rewrite the workspace Cargo.toml file adding the integration test paths (`tests/plugin_inventory`, `tests/plugin_mods`, `tests/plugin_tasks`). The tool only depends on the standard Rust toolchain, making it compatible with any environment.
 
 ## What gets generated?
 
@@ -195,32 +183,129 @@ Because each supertrait still inherits from `Plugin`, the manager can fall back 
 
 ## Wiring plugins into applications
 
-End-user applications load plugins through `package.metadata.plugins`:
+### Plugin Metadata Configuration
+
+End-user applications declare plugins in their `Cargo.toml` using `package.metadata.plugins`. There are two configuration patterns:
+
+#### Individual Plugins
+
+For standalone plugins, use a direct name-to-path mapping:
 
 ```toml
 [package.metadata.plugins]
 task_scheduler = "/absolute/path/to/libtask_scheduler.so"
+file_watcher = "/absolute/path/to/libfile_watcher.so"
+```
 
+#### Grouped Plugins
+
+For plugins that share a common category or type, use a nested table:
+
+```toml
 [package.metadata.plugins.analytics]
 metrics = "/path/to/libmetrics.so"
 logger = "/path/to/liblogger.so"
+
+[package.metadata.plugins.inventory]
+item_manager = "/path/to/libitem_manager.so"
 ```
 
-At runtime:
+Groups allow you to:
+
+- Organize related plugins together
+- Query all plugins of a specific type using `get_plugins_by_type_*` methods
+- Apply group-specific logic during plugin execution
+
+### Runtime Usage
+
+```rust
+use plugin_manager::PluginManager;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize and load plugins from metadata
+    let mut manager = PluginManager::new();
+    manager = manager.activate_plugins()?;
+    
+    // Execute individual plugin
+    manager.execute_plugin("task_scheduler", &())?;
+    
+    // Get all plugins in a group
+    let analytics_plugins = manager.get_plugins_by_type_analytics();
+    for (name, plugin) in analytics_plugins {
+        println!("Found analytics plugin: {}", name);
+        plugin.execute(&())?;
+    }
+    
+    Ok(())
+}
+```
+
+### Adding Plugins Programmatically
+
+You can also load plugins from paths not listed in metadata:
 
 ```rust
 use plugin_manager::PluginManager;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut manager = PluginManager::new();
+    
+    // Load plugin from specific path
+    manager = manager.with_path("/path/to/libcustom.so", Some("custom_group"))?;
+    
+    // Then activate all plugins
     manager = manager.activate_plugins()?;
-    manager.execute_plugin("task_scheduler", &())?;
+    
     Ok(())
 }
 ```
 
+## Platform-Specific Considerations
+
+Plugin file extensions vary by platform:
+
+- **Linux**: `.so` (shared object)
+- **macOS**: `.dylib` (dynamic library)
+- **Windows**: `.dll` (dynamic link library)
+
+When distributing applications, ensure plugin paths account for the target platform.
+
+## Troubleshooting
+
+### Plugin Not Found
+
+**Symptom**: `execute_plugin` returns an error saying the plugin doesn't exist.
+
+**Solutions**:
+
+- Verify the plugin name matches exactly (case-sensitive)
+- Check that `activate_plugins()` was called before `execute_plugin()`
+- Ensure the plugin path in metadata is correct and absolute
+- Confirm the plugin library was built with `cargo build --release`
+
+### Symbol Not Found
+
+**Symptom**: Error loading library, missing `create_plugins` symbol.
+
+**Solutions**:
+
+- Ensure your plugin exports `create_plugins` with `#[no_mangle]`
+- Verify `crate-type = ["lib", "cdylib"]` is set in plugin's `Cargo.toml`
+- Check that the plugin was compiled for the correct target platform
+
+### Workspace Member Issues
+
+**Symptom**: Cargo can't find plugin crates during build.
+
+**Solutions**:
+
+- Verify `[workspace].members` in root `Cargo.toml` includes all plugin paths
+- Ensure plugin crates have valid `Cargo.toml` files
+
 ## Next steps
 
-1. Update the generated README badges with your GitHub org/repo (the placeholder is already filled if you supplied `github-username`).
-2. Replace or expand the sample plugin crates with real integrations.
-3. Publish the `{{ crate_name }}_plugin_manager` crate to crates.io or use it via a path/git dependency inside your applications.
+1. **Customize the manager crate**: Update {{ crate_name }}_plugin_manager with your project-specific types and traits
+2. **Create real plugins**: Replace or expand the sample plugin crates with actual functionality
+3. **Publish or integrate**: Either publish {{ crate_name }}_plugin_manager to crates.io or use it via path/git dependency
+4. **Add CI/CD**: Set up automated testing and building for your plugins
+5. **Consider versioning**: Implement plugin version checking if you need ABI compatibility guarantees
